@@ -6,7 +6,9 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 class MessageController {
 
+    val handler = MessageHandler(MessageRepository())
+
     @GetMapping("/messages")
-    fun allMessages() = listOf(Message("some_id", "test message", 0))
+    fun allMessages() = handler.allMessages()
 
 }
