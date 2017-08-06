@@ -10,9 +10,15 @@ jobs:
           keys:
           - api-{{ checksum "api/build.gradle" }}
           - api-default
-      - run: cd api && gradle dependencies
+      - run: cd ~/gutargu/api && gradle dependencies
       - save_cache:
           paths:
             - ~/.m2
           key: api-{{ checksum "api/build.gradle" }}
-      - run: cd api && gradle test
+      - run: cd ~/gutargu/api && gradle test
+      - run: cd ~/gutargu/api && gradle bootJar
+      - setup_remote_docker
+      - run: |
+          cd ~/gutargu/api && docker build -t vivekjain10/gutargu-api .
+          cd ~/gutargu/api && docker login -u $DOCKER_USER -p $DOCKER_PASS
+          docker push vivekjain10/gutargu-api
