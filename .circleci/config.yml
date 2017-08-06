@@ -1,0 +1,18 @@
+version: 1
+jobs:
+  build:
+    docker:
+      - image: circleci/openjdk:8-jdk
+    working_directory: ~/gutargu
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+          - api-{{ checksum "api/build.gradle" }}
+          - api-default
+      - run: cd api && gradle dependencies
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: api-{{ checksum "api/build.gradle" }}
+      - run: cd api && gradle test
