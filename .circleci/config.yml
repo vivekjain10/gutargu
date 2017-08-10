@@ -1,24 +1,64 @@
-version: 1
+defaults: &defaults
+  working_directory: ~/gutargu
+  docker:
+    - image: circleci/openjdk:8-jdk
+
+version: 2
 jobs:
   build:
-    docker:
-      - image: circleci/openjdk:8-jdk
-    working_directory: ~/gutargu
+    <<: *defaults
     steps:
       - checkout
       - restore_cache:
           keys:
           - api-{{ checksum "api/build.gradle" }}
           - api-default
-      - run: cd ~/gutargu/api && gradle dependencies
+      - run: cd ~/gutargu/api && ./gradlew build
       - save_cache:
           paths:
             - ~/.m2
           key: api-{{ checksum "api/build.gradle" }}
-      - run: cd ~/gutargu/api && gradle test
-      - run: cd ~/gutargu/api && gradle bootJar
+  test:
+    <<: *defaults
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+          - api-{{ checksum "api/build.gradle" }}
+      - run: cd ~/gutargu/api && ./gradlew test
+  package:
+    <<: *defaults
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+          - api-{{ checksum "api/build.gradle" }}
+      - run: cd ~/gutargu/api && ./gradlew bootJar
+      - persist_to_workspace:
+          root: api/build
+          paths:
+            - libs/
+  publish:
+    <<: *defaults
+    steps:
       - setup_remote_docker
+      - attach_workspace:
+          at: api/build
       - run: |
           cd ~/gutargu/api && docker build -t vivekjain10/gutargu-api .
           cd ~/gutargu/api && docker login -u $DOCKER_USER -p $DOCKER_PASS
           docker push vivekjain10/gutargu-api
+workflows:
+  version: 2
+  build-test-package-and-publish:
+    jobs:
+      - build
+      - test:
+          requires:
+            - build
+      - package:
+          requires:
+            - test
+      - publish:
+          requires:
+            - package
