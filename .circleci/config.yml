@@ -13,7 +13,7 @@ jobs:
           keys:
           - api-{{ checksum "api/build.gradle" }}
           - api-default
-      - run: cd ~/gutargu/api && ./gradlew build
+      - run: cd ~/gutargu/api && gradle build
       - save_cache:
           paths:
             - ~/.gradle
@@ -25,7 +25,7 @@ jobs:
       - restore_cache:
           keys:
           - api-{{ checksum "api/build.gradle" }}
-      - run: cd ~/gutargu/api && ./gradlew test
+      - run: cd ~/gutargu/api && gradle test
   package:
     <<: *defaults
     steps:
@@ -33,7 +33,7 @@ jobs:
       - restore_cache:
           keys:
           - api-{{ checksum "api/build.gradle" }}
-      - run: cd ~/gutargu/api && ./gradlew bootJar
+      - run: cd ~/gutargu/api && gradle bootJar
       - persist_to_workspace:
           root: api/build
           paths:
