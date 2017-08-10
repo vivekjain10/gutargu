@@ -37,13 +37,13 @@ jobs:
       - persist_to_workspace:
           root: api/build
           paths:
-            - libs/
+            - libs/api-0.0.1-SNAPSHOT.jar
   publish:
     <<: *defaults
     steps:
-      - setup_remote_docker
       - attach_workspace:
           at: api/build
+      - setup_remote_docker
       - run: |
           cd ~/gutargu/api && docker build -t vivekjain10/gutargu-api .
           cd ~/gutargu/api && docker login -u $DOCKER_USER -p $DOCKER_PASS
