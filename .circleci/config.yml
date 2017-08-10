@@ -37,7 +37,7 @@ jobs:
       - persist_to_workspace:
           root: api/build
           paths:
-            - libs/api-0.0.1-SNAPSHOT.jar
+            - libs/
   publish:
     <<: *defaults
     steps:
