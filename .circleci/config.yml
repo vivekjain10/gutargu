@@ -46,9 +46,24 @@ jobs:
           at: api/build
       - setup_remote_docker
       - run: |
-          cd ~/gutargu/api && docker build -t vivekjain10/gutargu-api .
+          cd ~/gutargu/api && docker build -t $DOCKER_USER/gutargu-api:$CIRCLE_SHA1 .
           cd ~/gutargu/api && docker login -u $DOCKER_USER -p $DOCKER_PASS
-          cd ~/gutargu/api && docker push vivekjain10/gutargu-api
+          cd ~/gutargu/api && docker push $DOCKER_USER/gutargu-api:$CIRCLE_SHA1
+  deploy:
+    working_directory: ~/gutargu
+    docker:
+      - image: google/cloud-sdk
+    steps:
+      - run: |
+          echo $GCLOUD_KEY | base64 --decode > gcloud.p12
+          gcloud auth activate-service-account $GCLOUD_EMAIL --key-file gcloud.p12
+          gcloud --quiet config set project $GCLOUD_PROJECT_NAME
+          gcloud --quiet config set container/cluster $GCLOUD_CLUSTER_NAME
+          gcloud --quiet config set compute/zone ${GCLOUD_COMPUTE_ZONE}
+          gcloud --quiet config set container/use_application_default_credentials true
+          gcloud --quiet config set container/use_client_certificate true
+          gcloud --quiet container clusters get-credentials $GCLOUD_CLUSTER_NAME
+          kubectl patch deployment gutargu-api -p '{"spec":{"template":{"spec":{"containers":[{"name":"gutargu-api","image":"$DOCKER_USER/gutargu-api:'"$CIRCLE_SHA1"'"}]}}}}'
 workflows:
   version: 2
   build-test-package-and-publish:
@@ -63,3 +78,6 @@ workflows:
       - publish:
           requires:
             - package
+      - deploy:
+          requires:
+            - publish
